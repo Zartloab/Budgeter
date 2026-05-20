@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 26.2.3.2 (Linux)"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="00:00:00"/>
+	<style type="text/css">
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		p { margin-bottom: 0.1in; line-height: 115%; background: transparent }
+		pre { font-size: 10pt; font-family: "Liberation Mono", monospace; background: transparent }
+	</style>
+</head>
+<body lang="en-US" link="#000080" vlink="#800000" dir="ltr"><pre>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;UTF-8&quot;/&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;/&gt;
+&lt;title&gt;FinOS v2&lt;/title&gt;
+&lt;style&gt;
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--bg:#07070F;--surf:#0F0F1A;--surf2:#161626;--bdr:rgba(255,255,255,0.07);--txt:#F0F0FF;--sub:#7B7B9E;--mut:#3E3E58;}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;padding:16px;min-height:100vh;color:var(--txt);}
+#app{width:100%;max-width:480px;display:flex;flex-direction:column;min-height:calc(100vh - 32px);background:var(--bg);border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.8);position:relative;}
+#toast{display:none;padding:11px 20px;font-size:13px;font-weight:500;text-align:center;flex-shrink:0;z-index:100;}
+#header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:16px 18px 12px;flex-shrink:0;}
+#content{flex:1;overflow-y:auto;padding:14px 14px 0;}
+#nav{background:var(--surf);border-top:1px solid var(--bdr);display:flex;flex-shrink:0;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 2px 12px;background:none;border:none;cursor:pointer;font-size:10px;color:var(--mut);font-weight:400;border-top:2px solid transparent;transition:color .15s;font-family:inherit;}
+.nav-btn.active{color:#fff;font-weight:700;}
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:14px;margin-bottom:10px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.inp{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--txt);outline:none;box-sizing:border-box;font-family:inherit;}
+.inp:focus{border-color:rgba(255,255,255,0.25);}
+select.inp option{background:#0F0F1A;color:var(--txt);}
+.btn{border:none;border-radius:10px;cursor:pointer;font-family:inherit;font-weight:700;transition:opacity .15s;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn:hover:not(:disabled){opacity:.85;}
+.sec-title{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.09em;margin-bottom:12px;font-weight:700;}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;}
+.row:last-child{border-bottom:none;}
+.pbar-wrap{height:6px;border-radius:3px;background:rgba(255,255,255,0.07);overflow:hidden;margin-top:5px;}
+.pbar{height:100%;border-radius:3px;transition:width .8s ease;}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;backdrop-filter:blur(4px);}
+#modal{display:none;position:fixed;inset:0;z-index:201;display:none;align-items:center;justify-content:center;padding:16px;}
+#modal.open{display:flex;}
+textarea{outline:none;resize:vertical;}
+input[type=number]::-webkit-inner-spin-button{opacity:.7;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;app&quot;&gt;
+  &lt;div id=&quot;toast&quot;&gt;&lt;/div&gt;
+  &lt;div id=&quot;header&quot;&gt;&lt;/div&gt;
+  &lt;div id=&quot;content&quot;&gt;&lt;/div&gt;
+  &lt;div id=&quot;nav&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;modal-overlay&quot; onclick=&quot;closeModal()&quot;&gt;&lt;/div&gt;
+&lt;div id=&quot;modal&quot;&gt;&lt;/div&gt;
+
+&lt;script&gt;
+'use strict';
+// ═══════════════════════ CONSTANTS ═══════════════════════
+const CATS = ['Groceries','Eating Out','Fuel','Transport','Shopping','Health','Bills','Subscriptions','Entertainment','Business','Travel','Income','Transfer','Other'];
+const CAT_COL = {'Groceries':'#54A0FF','Eating Out':'#FF9F43','Fuel':'#FF5C5C','Transport':'#00CEC9','Shopping':'#A29BFE','Health':'#55EFC4','Bills':'#74B9FF','Subscriptions':'#FD79A8','Entertainment':'#FDCB6E','Business':'#6C5CE7','Travel':'#00B894','Income':'#55EFC4','Transfer':'#B2BEC3','Other':'#636E72'};
+const CAT_EMOJI = {'Groceries':'🛒','Eating Out':'🍽️','Fuel':'⛽','Transport':'🚌','Shopping':'🛍️','Health':'💊','Bills':'⚡','Subscriptions':'📱','Entertainment':'🎬','Business':'💼','Travel':'✈️','Income':'💰','Transfer':'↔️','Other':'📋'};
+const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+
+const CFG0 = {myWeeklyIncome:1270,wifeFortnightlyIncome:1800,weeklyRent:700,weeklySpends:500,weeklyBills:290,weeklyEmergency:100,weeklyGoals:50,totalDebt:40500,emergencyTarget:2000,billItems:[],claudeApiKey:'',currency:'AUD',categoryBudgets:{Groceries:250,'Eating Out':80,Fuel:70,Transport:40,Shopping:100,Health:50,Bills:290,Subscriptions:50,Entertainment:50,Business:0,Travel:50,Other:50}};
+const DATA0 = {emergencyBalance:0,debtPaid:0,goalsBalance:0,savingsBalance:0,transactions:[],logs:[],aiHistory:[]};
+
+// ═══════════════════════ STATE ═══════════════════════
+let cfg, data;
+function loadStore(key, def) { try { const v=localStorage.getItem(key); return v?{...def,...JSON.parse(v)}:{...def}; } catch { return {...def}; } }
+function saveCfg() { try { localStorage.setItem('finos_cfg',JSON.stringify(cfg)); } catch {} }
+function saveData() { try { localStorage.setItem('finos_data',JSON.stringify(data)); } catch {} }
+
+cfg = loadStore('finos_cfg', CFG0);
+data = loadStore('finos_data', DATA0);
+if (!cfg.categoryBudgets) cfg.categoryBudgets = {...CFG0.categoryBudgets};
+if (!cfg.billItems) cfg.billItems = [];
+if (!data.transactions) data.transactions = [];
+if (!data.aiHistory) data.aiHistory = [];
+
+let tab = 'dashboard';
+let txFilter = {search:'', category:'', period:'month'};
+let txSort = {field:'date', dir:-1};
+let editTxId = null;
+let aiLoading = false;
+let currentTxType = 'expense';
+
+// ═══════════════════════ HELPERS ═══════════════════════
+const $ = id =&gt; document.getElementById(id);
+const esc = s =&gt; String(s||'').replace(/&amp;/g,'&amp;amp;').replace(/&lt;/g,'&amp;lt;').replace(/&gt;/g,'&amp;gt;').replace(/&quot;/g,'&amp;quot;');
+const uid = () =&gt; Date.now().toString(36)+Math.random().toString(36).slice(2);
+const today = () =&gt; new Date().toISOString().slice(0,10);
+const hexRgb = h =&gt; { try { return [1,3,5].map(i=&gt;parseInt((h||'#636e72').slice(i,i+2),16)).join(','); } catch { return '99,110,114'; }};
+const pct = (v,t) =&gt; t&gt;0?Math.min(100,Math.round(v/t*100)):0;
+
+function fmt(n, dec=0) {
+  const sym = {AUD:'$',USD:'$',GBP:'£',EUR:'€',NZD:'$'}[cfg.currency]||'$';
+  return sym + Math.abs(n||0).toLocaleString('en-AU',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+
+function flash(msg, good=true) {
+  const el=$('toast');
+  el.style.display='block';
+  el.style.background=good?'rgba(85,239,196,0.12)':'rgba(255,92,92,0.12)';
+  el.style.color=good?'#55EFC4':'#FF5C5C';
+  el.style.borderBottom=`1px solid ${good?'rgba(85,239,196,0.25)':'rgba(255,92,92,0.25)'}`;
+  el.textContent=msg;
+  setTimeout(()=&gt;el.style.display='none',3500);
+}
+
+function getWeekStart(d=new Date()) {
+  const x=new Date(d), day=x.getDay(), diff=x.getDate()-day+(day===0?-6:1);
+  x.setDate(diff); x.setHours(0,0,0,0); return x;
+}
+function getMonthStart(d=new Date()) { return new Date(d.getFullYear(),d.getMonth(),1); }
+function parseDate(s) { const [y,m,d]=String(s).split('-').map(Number); return new Date(y,m-1,d); }
+function txInPeriod(tx, p) {
+  if (p==='all') return true;
+  const d=parseDate(tx.date), now=new Date();
+  if (p==='week') return d&gt;=getWeekStart();
+  if (p==='month') return d&gt;=getMonthStart();
+  if (p==='last30') { const c=new Date(); c.setDate(c.getDate()-30); return d&gt;=c; }
+  return true;
+}
+
+// ═══════════════════════ COMPUTED ═══════════════════════
+function C() {
+  const billsTotal = cfg.billItems.length&gt;0 ? cfg.billItems.reduce((s,i)=&gt;s+i.amount,0) : cfg.weeklyBills;
+  const weeklyAvg = cfg.myWeeklyIncome + cfg.wifeFortnightlyIncome/2;
+  const eDone = data.emergencyBalance &gt;= cfg.emergencyTarget;
+  const dDone = data.debtPaid &gt;= cfg.totalDebt;
+  const phase = dDone?3:eDone?2:1;
+  const phaseC = ['','#54A0FF','#FF9F43','#55EFC4'][phase];
+  const eAlloc = eDone?0:cfg.weeklyEmergency;
+  const fixed = cfg.weeklyRent+billsTotal+eAlloc+cfg.weeklyGoals;
+  const debtAlloc = !dDone?Math.max(0,weeklyAvg-fixed-cfg.weeklySpends):0;
+  const savAlloc = dDone?Math.max(0,weeklyAvg-fixed-cfg.weeklySpends):0;
+  const remDebt = Math.max(0,cfg.totalDebt-data.debtPaid);
+  const weeksLeft = debtAlloc&gt;0?Math.ceil(remDebt/debtAlloc):null;
+  const monthlyIncome = weeklyAvg*4.33;
+
+  const expenses = data.transactions.filter(t=&gt;t.type!=='income'&amp;&amp;t.type!=='transfer');
+  const ws=getWeekStart(), ms=getMonthStart();
+  const weekExp = expenses.filter(t=&gt;parseDate(t.date)&gt;=ws);
+  const monthExp = expenses.filter(t=&gt;parseDate(t.date)&gt;=ms);
+  const weekTotal = weekExp.reduce((s,t)=&gt;s+t.amount,0);
+  const monthTotal = monthExp.reduce((s,t)=&gt;s+t.amount,0);
+
+  const monthByCat = {};
+  CATS.forEach(c=&gt;monthByCat[c]=0);
+  monthExp.forEach(t=&gt;{ if(monthByCat[t.category]!==undefined) monthByCat[t.category]+=t.amount; else monthByCat['Other']+=t.amount; });
+
+  const savingsRate = monthlyIncome&gt;0?Math.max(0,Math.round((1-monthTotal/monthlyIncome)*100)):0;
+  return {billsTotal,weeklyAvg,eDone,dDone,phase,phaseC,eAlloc,fixed,debtAlloc,savAlloc,remDebt,weeksLeft,monthlyIncome,weekTotal,monthTotal,monthByCat,savingsRate};
+}
+
+// ═══════════════════════ TRANSACTIONS ═══════════════════════
+function addTx(tx) { data.transactions.unshift({id:uid(),...tx}); saveData(); }
+function updateTx(id, upd) { const i=data.transactions.findIndex(t=&gt;t.id===id); if(i&gt;=0){data.transactions[i]={...data.transactions[i],...upd};saveData();} }
+function deleteTx(id) { data.transactions=data.transactions.filter(t=&gt;t.id!==id); saveData(); }
+
+function getFilteredTx() {
+  return data.transactions
+    .filter(t =&gt; {
+      if (txFilter.search &amp;&amp; !`${t.merchant}${t.category}${t.notes||''}`.toLowerCase().includes(txFilter.search.toLowerCase())) return false;
+      if (txFilter.category &amp;&amp; t.category!==txFilter.category) return false;
+      if (!txInPeriod(t, txFilter.period)) return false;
+      return true;
+    })
+    .sort((a,b) =&gt; {
+      if (txSort.field==='date') return (a.date&lt;b.date?-1:1)*txSort.dir;
+      if (txSort.field==='amount') return (a.amount-b.amount)*txSort.dir;
+      return 0;
+    });
+}
+
+// ═══════════════════════ MODAL ═══════════════════════
+function openModal(html) {
+  $('modal').innerHTML=html;
+  $('modal-overlay').style.display='block';
+  $('modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal() {
+  $('modal-overlay').style.display='none';
+  $('modal').classList.remove('open');
+  $('modal').innerHTML='';
+  document.body.style.overflow='';
+  editTxId=null;
+}
+
+// ═══════════════════════ HEADER ═══════════════════════
+function renderHeader() {
+  const {weeklyAvg,phase,phaseC,dDone,remDebt,monthTotal,savingsRate}=C();
+  const rgb=hexRgb(phaseC);
+  $('header').innerHTML=`
+  &lt;div style=&quot;display:flex;justify-content:space-between;align-items:flex-start&quot;&gt;
+    &lt;div&gt;
+      &lt;div style=&quot;font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;font-weight:600&quot;&gt;FinOS v2&lt;/div&gt;
+      &lt;div style=&quot;font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1.1&quot;&gt;${fmt(weeklyAvg)}&lt;span style=&quot;font-size:12px;font-weight:400;color:var(--sub);margin-left:5px&quot;&gt;/wk avg&lt;/span&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div style=&quot;background:rgba(${rgb},.15);color:${phaseC};border:1px solid rgba(${rgb},.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;margin-top:2px&quot;&gt;PHASE ${phase}/3&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div style=&quot;display:flex;gap:14px;margin-top:8px;flex-wrap:wrap&quot;&gt;
+    &lt;span style=&quot;font-size:12px;color:var(--sub)&quot;&gt;Month: &lt;strong style=&quot;color:${monthTotal&gt;cfg.weeklySpends*4?'#FF5C5C':'var(--txt)'}&quot;&gt;${fmt(monthTotal,2)}&lt;/strong&gt;&lt;/span&gt;
+    &lt;span style=&quot;font-size:12px;color:var(--sub)&quot;&gt;Savings: &lt;strong style=&quot;color:#55EFC4&quot;&gt;${savingsRate}%&lt;/strong&gt;&lt;/span&gt;
+    ${!dDone?`&lt;span style=&quot;font-size:12px;color:#FD79A8&quot;&gt;Debt: &lt;strong&gt;${fmt(remDebt)}&lt;/strong&gt;&lt;/span&gt;`:'&lt;span style=&quot;font-size:12px;color:#55EFC4&quot;&gt;🎉 Debt free!&lt;/span&gt;'}
+  &lt;/div&gt;`;
+}
+
+// ═══════════════════════ NAV ═══════════════════════
+function renderNav() {
+  const {phaseC}=C();
+  $('nav').innerHTML=[['dashboard','🏠','Home'],['transactions','💳','Spend'],['budgets','📊','Budgets'],['analytics','📈','Trends'],['ai','🤖','AI'],['settings','⚙️','Settings']]
+    .map(([id,e,l])=&gt;`&lt;button class=&quot;nav-btn ${tab===id?'active':''}&quot; onclick=&quot;setTab('${id}')&quot; style=&quot;border-top-color:${tab===id?phaseC:'transparent'}&quot;&gt;&lt;span style=&quot;font-size:18px;line-height:1&quot;&gt;${e}&lt;/span&gt;&lt;span&gt;${l}&lt;/span&gt;&lt;/button&gt;`).join('');
+}
+
+// ═══════════════════════ DASHBOARD ═══════════════════════
+function renderDashboard() {
+  const {weeklyAvg,eDone,dDone,debtAlloc,weeksLeft,weekTotal,monthTotal,monthByCat,phaseC}=C();
+  const recent=data.transactions.slice(0,5);
+  const topCats=Object.entries(monthByCat).filter(([,v])=&gt;v&gt;0).sort((a,b)=&gt;b[1]-a[1]).slice(0,4);
+  const phases=[
+    {label:'Emergency Fund',target:cfg.emergencyTarget,current:data.emergencyBalance,color:'#00CEC9',done:eDone},
+    {label:'Debt Freedom',target:cfg.totalDebt,current:data.debtPaid,color:'#FD79A8',done:dDone},
+    {label:'Savings Growth',target:Math.max(weeklyAvg*52,data.savingsBalance+1),current:data.savingsBalance,color:'#55EFC4',done:false},
+  ];
+  return `
+  &lt;div class=&quot;grid2&quot;&gt;
+    ${[['📅 This Week',fmt(weekTotal,2),weekTotal&gt;cfg.weeklySpends?'#FF5C5C':'#55EFC4',`budget ${fmt(cfg.weeklySpends)}`],['🗓️ This Month',fmt(monthTotal,2),'#FF9F43',`income ${fmt(weeklyAvg*4.33,0)}`]]
+      .map(([l,v,col,sub])=&gt;`&lt;div style=&quot;background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:14px&quot;&gt;&lt;div style=&quot;font-size:11px;color:var(--mut);margin-bottom:4px&quot;&gt;${l}&lt;/div&gt;&lt;div style=&quot;font-size:22px;font-weight:800;color:${col};letter-spacing:-.5px&quot;&gt;${v}&lt;/div&gt;&lt;div style=&quot;font-size:10px;color:var(--mut);margin-top:2px&quot;&gt;${sub}&lt;/div&gt;&lt;/div&gt;`).join('')}
+  &lt;/div&gt;
+
+  &lt;div class=&quot;card&quot;&gt;
+    &lt;div class=&quot;sec-title&quot;&gt;Milestones&lt;/div&gt;
+    ${phases.map(p=&gt;`
+    &lt;div style=&quot;margin-bottom:12px&quot;&gt;
+      &lt;div style=&quot;display:flex;justify-content:space-between;margin-bottom:5px&quot;&gt;
+        &lt;span style=&quot;font-size:13px;color:${p.done?p.color:'var(--txt)'};font-weight:600&quot;&gt;${p.label}${p.done?' ✓':''}&lt;/span&gt;
+        &lt;span style=&quot;font-size:12px;color:var(--sub)&quot;&gt;${fmt(p.current)} / ${fmt(p.target)}&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;pbar-wrap&quot;&gt;&lt;div class=&quot;pbar&quot; style=&quot;width:${pct(p.current,p.target)}%;background:${p.color}&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+    &lt;/div&gt;`).join('')}
+    ${!dDone&amp;&amp;weeksLeft?`&lt;div style=&quot;font-size:11px;color:var(--mut);text-align:center&quot;&gt;Debt free in ~${weeksLeft} weeks at ${fmt(debtAlloc)}/wk&lt;/div&gt;`:''}
+  &lt;/div&gt;
+
+  ${topCats.length&gt;0?`
+  &lt;div class=&quot;card&quot;&gt;
+    &lt;div class=&quot;sec-title&quot;&gt;Top spending this month&lt;/div&gt;
+    ${topCats.map(([cat,amt])=&gt;{
+      const bgt=(cfg.categoryBudgets[cat]||0)*4.33, col=CAT_COL[cat]||'#636E72', over=bgt&amp;&amp;amt&gt;bgt;
+      return `&lt;div style=&quot;margin-bottom:10px&quot;&gt;
+        &lt;div style=&quot;display:flex;justify-content:space-between;margin-bottom:4px&quot;&gt;
+          &lt;span style=&quot;font-size:13px;font-weight:600&quot;&gt;${CAT_EMOJI[cat]||'📋'} ${cat}&lt;/span&gt;
+          &lt;span style=&quot;font-size:13px;font-weight:700;color:${over?'#FF5C5C':col}&quot;&gt;${fmt(amt,2)}${bgt?` / ${fmt(bgt,0)}`:''}&lt;/span&gt;
+        &lt;/div&gt;
+        ${bgt?`&lt;div class=&quot;pbar-wrap&quot;&gt;&lt;div class=&quot;pbar&quot; style=&quot;width:${pct(amt,bgt)}%;background:${over?'#FF5C5C':col}&quot;&gt;&lt;/div&gt;&lt;/div&gt;`:''}
+      &lt;/div&gt;`;
+    }).join('')}
+  &lt;/div&gt;` : `
+  &lt;div class=&quot;card&quot; style=&quot;text-align:center;padding:24px&quot;&gt;
+    &lt;div style=&quot;font-size:32px;margin-bottom:8px&quot;&gt;💳&lt;/div&gt;
+    &lt;div style=&quot;font-size:14px;font-weight:700;margin-bottom:4px&quot;&gt;No transactions yet&lt;/div&gt;
+    &lt;div style=&quot;font-size:12px;color:var(--mut);margin-bottom:14px&quot;&gt;Add your first transaction to see spending insights&lt;/div&gt;
+    &lt;button onclick=&quot;setTab('transactions')&quot; class=&quot;btn&quot; style=&quot;background:rgba(84,160,255,.2);color:#54A0FF;border:1px solid rgba(84,160,255,.3);padding:8px 18px;font-size:13px&quot;&gt;Add Transaction →&lt;/button&gt;
+  &lt;/div&gt;`}
+
+  ${recent.length&gt;0?`
+  &lt;div class=&quot;card&quot;&gt;
+    &lt;div style=&quot;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px&quot;&gt;
+      &lt;div class=&quot;sec-title&quot; style=&quot;margin:0&quot;&gt;Recent transactions&lt;/div&gt;
+      &lt;button onclick=&quot;setTab('transactions')&quot; style=&quot;background:none;border:none;color:#54A0FF;font-size:12px;cursor:pointer;font-family:inherit&quot;&gt;View all →&lt;/button&gt;
+    &lt;/div&gt;
+    ${recent.map(t=&gt;txRow(t,false)).join('')}
+  &lt;/div&gt;`:''}
+
+  &lt;div style=&quot;background:rgba(162,155,254,.${cfg.claudeApiKey?'08':'06'});border:1px ${cfg.claudeApiKey?'solid':'dashed'} rgba(162,155,254,.2);border-radius:16px;padding:14px;margin-bottom:12px;cursor:pointer&quot; onclick=&quot;setTab('${cfg.claudeApiKey?'ai':'settings'}')&quot;&gt;
+    &lt;div style=&quot;font-size:13px;font-weight:700;color:#A29BFE;margin-bottom:4px&quot;&gt;🤖 ${cfg.claudeApiKey?'Ask your money anything':'Enable AI features'}&lt;/div&gt;
+    &lt;div style=&quot;font-size:12px;color:var(--mut)&quot;&gt;${cfg.claudeApiKey?'AI assistant ready → tap to chat':'Add Claude API key in Settings to unlock AI insights'}&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div style=&quot;height:14px&quot;&gt;&lt;/div&gt;`;
+}
+
+// ═══════════════════════ TRANSACTIONS ═══════════════════════
+function txRow(t, actions=true) {
+  const col=CAT_COL[t.category]||'#636E72', rgb=hexRgb(col), isInc=t.type==='income';
+  return `
+  &lt;div style=&quot;display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)&quot;&gt;
+    &lt;div style=&quot;width:36px;height:36px;border-radius:10px;background:rgba(${rgb},.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0&quot;&gt;${CAT_EMOJI[t.category]||'📋'}&lt;/div&gt;
+    &lt;div style=&quot;flex:1;min-width:0&quot;&gt;
+      &lt;div style=&quot;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis&quot;&gt;${esc(t.merchant)}&lt;/div&gt;
+      &lt;div style=&quot;font-size:11px;color:var(--mut)&quot;&gt;${t.category} · ${t.date}${t.recurring?' · 🔄':''}&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div style=&quot;text-align:right;flex-shrink:0&quot;&gt;
+      &lt;div style=&quot;font-size:15px;font-weight:800;color:${isInc?'#55EFC4':'var(--txt)'}&quot;&gt;${isInc?'+':'−'}${fmt(t.amount,2)}&lt;/div&gt;
+    &lt;/div&gt;
+    ${actions?`&lt;div style=&quot;display:flex;gap:4px;flex-shrink:0&quot;&gt;
+      &lt;button onclick=&quot;openEditTx('${t.id}')&quot; style=&quot;background:rgba(84,160,255,.1);border:none;color:#54A0FF;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px&quot;&gt;✏️&lt;/button&gt;
+      &lt;button onclick=&quot;confirmDelTx('${t.id}')&quot; style=&quot;background:rgba(255,92,92,.1);border:none;color:#FF5C5C;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px&quot;&gt;🗑&lt;/button&gt;
+    &lt;/div&gt;`:''}
+  &lt;/div&gt;`;
+}
+
+function renderTransactions() {
+  const txs=getFilteredTx();
+  const spent=txs.filter(t=&gt;t.type!=='income'&amp;&amp;t.type!=='transfer').reduce((s,t)=&gt;s+t.amount,0);
+  const income=txs.filter(t=&gt;t.type==='income').reduce((s,t)=&gt;s+t.amount,0);
+  const net=income-spent;
+  return `
+  &lt;div style=&quot;display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap&quot;&gt;
+    &lt;input class=&quot;inp&quot; type=&quot;text&quot; placeholder=&quot;🔍 Search...&quot; value=&quot;${esc(txFilter.search)}&quot; oninput=&quot;txFilter.search=this.value;renderContent()&quot; style=&quot;flex:1;min-width:100px;font-weight:400;font-size:13px;padding:8px 12px&quot;/&gt;
+    &lt;select class=&quot;inp&quot; onchange=&quot;txFilter.category=this.value;renderContent()&quot; style=&quot;padding:8px 10px;font-size:12px&quot;&gt;
+      &lt;option value=&quot;&quot;&gt;All categories&lt;/option&gt;
+      ${CATS.map(c=&gt;`&lt;option value=&quot;${c}&quot; ${txFilter.category===c?'selected':''}&gt;${c}&lt;/option&gt;`).join('')}
+    &lt;/select&gt;
+    &lt;select class=&quot;inp&quot; onchange=&quot;txFilter.period=this.value;renderContent()&quot; style=&quot;padding:8px 10px;font-size:12px&quot;&gt;
+      &lt;option value=&quot;all&quot; ${txFilter.period==='all'?'selected':''}&gt;All time&lt;/option&gt;
+      &lt;option value=&quot;week&quot; ${txFilter.period==='week'?'selected':''}&gt;This week&lt;/option&gt;
+      &lt;option value=&quot;month&quot; ${txFilter.period==='month'?'selected':''}&gt;This month&lt;/option&gt;
+      &lt;option value=&quot;last30&quot; ${txFilter.period==='last30'?'selected':''}&gt;Last 30 days&lt;/option&gt;
+    &lt;/select&gt;
+  &lt;/div&gt;
+  &lt;div style=&quot;display:flex;gap:8px;margin-bottom:10px&quot;&gt;
+    ${[['Spent',fmt(spent,2),'#FF5C5C'],['Income',fmt(income,2),'#55EFC4'],['Net',(net&gt;=0?'+':'−')+fmt(Math.abs(net),2),net&gt;=0?'#55EFC4':'#FF5C5C']]
+      .map(([l,v,col])=&gt;`&lt;div style=&quot;flex:1;background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:10px;text-align:center&quot;&gt;&lt;div style=&quot;font-size:10px;color:var(--mut);margin-bottom:2px&quot;&gt;${l}&lt;/div&gt;&lt;div style=&quot;font-size:17px;font-weight:800;color:${col}&quot;&gt;${v}&lt;/div&gt;&lt;/div&gt;`).join('')}
+  &lt;/div&gt;
+  &lt;button onclick=&quot;openAddTx()&quot; class=&quot;btn&quot; style=&quot;width:100%;padding:12px;border-radius:12px;background:linear-gradient(135deg,#54A0FF,#6C5CE7);color:#fff;font-size:14px;margin-bottom:10px&quot;&gt;<span lang="zh-CN">＋ </span>Add Transaction&lt;/button&gt;
+  &lt;div class=&quot;card&quot; style=&quot;padding:0 14px&quot;&gt;
+    ${txs.length===0?`&lt;div style=&quot;text-align:center;padding:28px 0;color:var(--mut)&quot;&gt;&lt;div style=&quot;font-size:28px;margin-bottom:8px&quot;&gt;🔍&lt;/div&gt;&lt;div style=&quot;font-size:13px&quot;&gt;${data.transactions.length===0?'No transactions yet. Add your first one!':'No transactions match your filters.'}&lt;/div&gt;&lt;/div&gt;`:txs.map(t=&gt;txRow(t)).join('')}
+  &lt;/div&gt;
+  &lt;div style=&quot;height:14px&quot;&gt;&lt;/div&gt;`;
+}
+
+function txModalHTML(tx=null) {
+  const e=!!tx;
+  return `
+  &lt;div style=&quot;background:var(--surf);border:1px solid var(--bdr);border-radius:20px;padding:20px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto&quot;&gt;
+    &lt;div style=&quot;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px&quot;&gt;
+      &lt;div style=&quot;font-size:16px;font-weight:800&quot;&gt;${e?'Edit':'Add'} Transaction&lt;/div&gt;
+      &lt;button onclick=&quot;closeModal()&quot; style=&quot;background:rgba(255,255,255,.08);border:none;color:var(--sub);border-radius:8px;width:30px;height:30px;font-size:16px;cursor:pointer;font-family:inherit&quot;&gt;×&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div style=&quot;display:flex;gap:8px;margin-bottom:14px&quot; id=&quot;tx-type-btns&quot;&gt;
+      ${[['expense','Expense','rgba(255,92,92,.25)','#FF5C5C'],['income','Income','rgba(85,239,196,.25)','#55EFC4'],['transfer','Transfer','rgba(84,160,255,.25)','#54A0FF']].map(([t,l,bg,col])=&gt;`
+      &lt;button onclick=&quot;setTxType('${t}')&quot; id=&quot;tt-${t}&quot; class=&quot;btn&quot; style=&quot;flex:1;padding:8px;border-radius:10px;font-size:12px;background:${(!tx&amp;&amp;t==='expense')||(tx?.type===t)?bg:'rgba(255,255,255,.05)'};color:${(!tx&amp;&amp;t==='expense')||(tx?.type===t)?col:'var(--mut)'}&quot;&gt;${l}&lt;/button&gt;`).join('')}
+    &lt;/div&gt;
+    &lt;div style=&quot;display:grid;gap:10px&quot;&gt;
+      &lt;div&gt;&lt;label style=&quot;font-size:11px;color:var(--mut);display:block;margin-bottom:4px&quot;&gt;Merchant / Name&lt;/label&gt;
+        &lt;input class=&quot;inp&quot; id=&quot;tx-merchant&quot; type=&quot;text&quot; placeholder=&quot;e.g. Woolworths&quot; value=&quot;${esc(tx?.merchant||'')}&quot; style=&quot;width:100%;font-weight:400&quot;/&gt;&lt;/div&gt;
+      &lt;div&gt;&lt;label style=&quot;font-size:11px;color:var(--mut);display:block;margin-bottom:4px&quot;&gt;Amount&lt;/label&gt;
+        &lt;input class=&quot;inp&quot; id=&quot;tx-amount&quot; type=&quot;number&quot; placeholder=&quot;0.00&quot; step=&quot;0.01&quot; value=&quot;${tx?.amount||''}&quot; style=&quot;width:100%;font-size:20px;font-weight:800&quot;/&gt;&lt;/div&gt;
+      &lt;div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:10px&quot;&gt;
+        &lt;div&gt;&lt;label style=&quot;font-size:11px;color:var(--mut);display:block;margin-bottom:4px&quot;&gt;Category&lt;/label&gt;
+          &lt;select class=&quot;inp&quot; id=&quot;tx-cat&quot; style=&quot;width:100%;font-weight:400&quot;&gt;${CATS.map(c=&gt;`&lt;option value=&quot;${c}&quot; ${(tx?.category||'Other')===c?'selected':''}&gt;${c}&lt;/option&gt;`).join('')}&lt;/select&gt;&lt;/div&gt;
+        &lt;div&gt;&lt;label style=&quot;font-size:11px;color:var(--mut);display:block;margin-bottom:4px&quot;&gt;Date&lt;/label&gt;
+          &lt;input class=&quot;inp&quot; id=&quot;tx-date&quot; type=&quot;date&quot; value=&quot;${tx?.date||today()}&quot; style=&quot;width:100%;font-weight:400&quot;/&gt;&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div&gt;&lt;label style=&quot;font-size:11px;color:var(--mut);display:block;margin-bottom:4px&quot;&gt;Notes (optional)&lt;/label&gt;
+        &lt;input class=&quot;inp&quot; id=&quot;tx-notes&quot; type=&quot;text&quot; placeholder=&quot;Any notes...&quot; value=&quot;${esc(tx?.notes||'')}&quot; style=&quot;width:100%;font-weight:400&quot;/&gt;&lt;/div&gt;
+      &lt;label style=&quot;display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;border-radius:10px;background:rgba(255,255,255,.03)&quot;&gt;
+        &lt;input type=&quot;checkbox&quot; id=&quot;tx-rec&quot; ${tx?.recurring?'checked':''} style=&quot;width:16px;height:16px;cursor:pointer&quot;/&gt;
+        &lt;span style=&quot;font-size:13px;color:var(--sub)&quot;&gt;🔄 Recurring / Subscription&lt;/span&gt;
+      &lt;/label&gt;
+    &lt;/div&gt;
+    &lt;button onclick=&quot;saveTxForm()&quot; class=&quot;btn&quot; style=&quot;width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#54A0FF,#6C5CE7);color:#fff;font-size:14px;margin-top:16px&quot;&gt;${e?'Update':'Add'} Transaction&lt;/button&gt;
+  &lt;/div&gt;`;
+}
+
+window.openAddTx = () =&gt; { editTxId=null; currentTxType='expense'; openModal(txModalHTML()); };
+window.openEditTx = id =&gt; { editTxId=id; const tx=data.transactions.find(t=&gt;t.id===id); if(!tx)return; currentTxType=tx.type||'expense'; openModal(txModalHTML(tx)); };
+
+window.setTxType = type =&gt; {
+  currentTxType=type;
+  const map={expense:['rgba(255,92,92,.25)','#FF5C5C'],income:['rgba(85,239,196,.25)','#55EFC4'],transfer:['rgba(84,160,255,.25)','#54A0FF']};
+  ['expense','income','transfer'].forEach(t =&gt; {
+    const b=$(`tt-${t}`); if(!b)return;
+    b.style.background=t===type?map[t][0]:'rgba(255,255,255,.05)';
+    b.style.color=t===type?map[t][1]:'var(--mut)';
+  });
+};
+
+window.saveTxForm = () =&gt; {
+  const merchant=($('tx-merchant')?.value||'').trim();
+  const amount=parseFloat($('tx-amount')?.value);
+  const cat=$('tx-cat')?.value||'Other';
+  const date=$('tx-date')?.value||today();
+  const notes=($('tx-notes')?.value||'').trim();
+  const rec=$('tx-rec')?.checked||false;
+  if(!merchant){flash('Enter a merchant name',false);return;}
+  if(!amount||amount&lt;=0){flash('Enter a valid amount',false);return;}
+  const tx={merchant,amount,category:cat,date,notes,recurring:rec,type:currentTxType};
+  if(editTxId){updateTx(editTxId,tx);flash('Transaction updated ✓');}
+  else{addTx(tx);flash('Transaction added ✓');}
+  closeModal(); renderAll();
+};
+
+window.confirmDelTx = id =&gt; { if(confirm('Delete this transaction?')){deleteTx(id);flash('Deleted');renderAll();} };
+
+// ═══════════════════════ BUDGETS ═══════════════════════
+function renderBudgets() {
+  const {monthByCat}=C();
+  return `
+  &lt;p class=&quot;sec-title&quot;&gt;Monthly category budgets&lt;/p&gt;
+  &lt;div style=&quot;font-size:12px;color:var(--mut);margin-bottom:12px;background:rgba(84,160,255,.07);border-radius:10px;padding:10px;border:1px solid rgba(84,160,255,.15)&quot;&gt;💡 Weekly budgets × 4.33 = monthly target. Amounts shown are this month's spending.&lt;/div&gt;
+  ${CATS.filter(c=&gt;c!=='Income'&amp;&amp;c!=='Transfer').map(cat=&gt;{
+    const weekly=cfg.categoryBudgets[cat]||0, monthly=weekly*4.33;
+    const spent=monthByCat[cat]||0, over=spent&gt;monthly&amp;&amp;monthly&gt;0;
+    const col=CAT_COL[cat]||'#636E72', rgb=hexRgb(col);
+    return `
+    &lt;div style=&quot;background:rgba(${rgb},.07);border:1px solid rgba(${rgb},.18);border-radius:16px;padding:14px;margin-bottom:10px&quot;&gt;
+      &lt;div style=&quot;display:flex;align-items:center;gap:10px;margin-bottom:${monthly&gt;0?'10':'0'}px&quot;&gt;
+        &lt;span style=&quot;font-size:22px&quot;&gt;${CAT_EMOJI[cat]||'📋'}&lt;/span&gt;
+        &lt;div style=&quot;flex:1&quot;&gt;&lt;div style=&quot;font-size:14px;font-weight:700&quot;&gt;${cat}&lt;/div&gt;&lt;div style=&quot;font-size:10px;color:var(--mut)&quot;&gt;weekly budget&lt;/div&gt;&lt;/div&gt;
+        &lt;div style=&quot;display:flex;align-items:center;gap:4px&quot;&gt;
+          &lt;span style=&quot;font-size:12px;color:var(--mut)&quot;&gt;$&lt;/span&gt;
+          &lt;input class=&quot;inp&quot; type=&quot;number&quot; value=&quot;${weekly||0}&quot; min=&quot;0&quot; onchange=&quot;setCatBudget('${cat}',this.value)&quot; style=&quot;width:75px;text-align:right;font-size:14px;font-weight:700;padding:5px 7px&quot;/&gt;
+          &lt;span style=&quot;font-size:10px;color:var(--mut)&quot;&gt;/wk&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      ${monthly&gt;0?`
+      &lt;div style=&quot;display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px&quot;&gt;
+        &lt;span style=&quot;color:var(--mut)&quot;&gt;Spent this month&lt;/span&gt;
+        &lt;span style=&quot;color:${over?'#FF5C5C':col};font-weight:700&quot;&gt;${fmt(spent,2)} / ${fmt(monthly,0)}&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;pbar-wrap&quot;&gt;&lt;div class=&quot;pbar&quot; style=&quot;width:${pct(spent,monthly)}%;background:${over?'#FF5C5C':col}&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+      &lt;div style=&quot;font-size:11px;color:${over?'#FF5C5C':'var(--mut)'};margin-top:4px;text-align:right&quot;&gt;${over?`⚠️ ${fmt(spent-monthly,2)} over`:`${fmt(monthly-spent,2)} remaining`}&lt;/div&gt;`:''}
+    &lt;/div&gt;`;
+  }).join('')}
+  &lt;div style=&quot;height:14px&quot;&gt;&lt;/div&gt;`;
+}
+
+window.setCatBudget = (cat,val) =&gt; { cfg.categoryBudgets[cat]=parseFloat(val)||0; saveCfg(); };
+
+// ═══════════════════════ ANALYTICS ═══════════════════════
+function renderAnalytics() {
+  const {monthByCat,weekTotal,monthTotal,weeklyAvg}=C();
+  const weeks=[];
+  for(let i=7;i&gt;=0;i--){
+    const ws=getWeekStart(new Date(Date.now()-i*7*864e5));
+    const we=new Date(ws); we.setDate(we.getDate()+7);
+    const tot=data.transactions.filter(t=&gt;t.type!=='income'&amp;&amp;t.type!=='transfer').filter(t=&gt;{const d=parseDate(t.date);return d&gt;=ws&amp;&amp;d&lt;we;}).reduce((s,t)=&gt;s+t.amount,0);
+    weeks.push({label:`${ws.getDate()}/${ws.getMonth()+1}`,total:tot});
+  }
+  const recurring=data.transactions.filter(t=&gt;t.recurring);
+  const subTotal=recurring.reduce((s,t)=&gt;s+t.amount,0);
+  const avgW=weeks.filter(w=&gt;w.total&gt;0).reduce((s,w)=&gt;s+w.total,0)/(weeks.filter(w=&gt;w.total&gt;0).length||1);
+  const catTotal=Object.values(monthByCat).reduce((s,v)=&gt;s+v,0);
+  return `
+  &lt;p class=&quot;sec-title&quot;&gt;Spending analytics&lt;/p&gt;
+  &lt;div class=&quot;grid2&quot;&gt;
+    ${[['Avg/week',fmt(avgW,2),'#FF9F43'],['This month',fmt(monthTotal,2),'#FF5C5C'],['Transactions',data.transactions.length,'#54A0FF'],['Recurring/mo',fmt(subTotal,2),'#FD79A8']]
+      .map(([l,v,col])=&gt;`&lt;div style=&quot;background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:12px&quot;&gt;&lt;div style=&quot;font-size:10px;color:var(--mut);margin-bottom:3px&quot;&gt;${l}&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:800;color:${col}&quot;&gt;${v}&lt;/div&gt;&lt;/div&gt;`).join('')}
+  &lt;/div&gt;
+
+  &lt;div class=&quot;card&quot;&gt;
+    &lt;div class=&quot;sec-title&quot;&gt;Weekly spending (last 8 weeks)&lt;/div&gt;
+    &lt;div style=&quot;display:flex;align-items:flex-end;gap:5px;height:90px;padding-bottom:4px&quot;&gt;
+      ${weeks.map(w=&gt;{
+        const maxW=Math.max(...weeks.map(x=&gt;x.total),cfg.weeklySpends,1);
+        const h=Math.max(4,Math.round(w.total/maxW*72));
+        return `&lt;div style=&quot;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;justify-content:flex-end&quot;&gt;
+          &lt;div style=&quot;font-size:8px;color:var(--mut)&quot;&gt;${w.total&gt;0?fmt(w.total,0):''}&lt;/div&gt;
+          &lt;div style=&quot;width:100%;height:${h}px;background:${w.total&gt;cfg.weeklySpends?'#FF5C5C':'#54A0FF'};border-radius:3px 3px 0 0;opacity:.8&quot;&gt;&lt;/div&gt;
+          &lt;div style=&quot;font-size:8px;color:var(--mut)&quot;&gt;${w.label}&lt;/div&gt;
+        &lt;/div&gt;`;
+      }).join('')}
+    &lt;/div&gt;
+    &lt;div style=&quot;font-size:10px;color:var(--mut);text-align:center;margin-top:4px&quot;&gt;🔴 over ${fmt(cfg.weeklySpends)}/wk budget&lt;/div&gt;
+  &lt;/div&gt;
+
+  ${catTotal&gt;0?`
+  &lt;div class=&quot;card&quot;&gt;
+    &lt;div class=&quot;sec-title&quot;&gt;Category breakdown — this month&lt;/div&gt;
+    ${Object.entries(monthByCat).filter(([,v])=&gt;v&gt;0).sort((a,b)=&gt;b[1]-a[1]).map(([cat,amt])=&gt;{
+      const col=CAT_COL[cat]||'#636E72';
+      return `&lt;div style=&quot;margin-bottom:9px&quot;&gt;
+        &lt;div style=&quot;display:flex;justify-content:space-between;margin-bottom:3px&quot;&gt;
+          &lt;span style=&quot;font-size:12px;color:var(--sub)&quot;&gt;${CAT_EMOJI[cat]||'📋'} ${cat}&lt;/span&gt;
+          &lt;span style=&quot;font-size:12px;font-weight:700;color:${col}&quot;&gt;${fmt(amt,2)} &lt;span style=&quot;font-size:10px;color:var(--mut)&quot;&gt;(${pct(amt,catTotal)}%)&lt;/span&gt;&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;pbar-wrap&quot;&gt;&lt;div class=&quot;pbar&quot; style=&quot;width:${pct(amt,catTotal)}%;background:${col}&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+      &lt;/div&gt;`;
+    }).join('')}
+  &lt;/div&gt;`:''}
+
+  ${recurring.length&gt;0?`
+  &lt;div class=&quot;card&quot;&gt;
+    &lt;div style=&quot;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px&quot;&gt;
+      &lt;div class=&quot;sec-title&quot; style=&quot;margin:0&quot;&gt;🔄 Subscriptions&lt;/div&gt;
+      &lt;span style=&quot;font-size:13px;font-weight:700;color:#FD79A8&quot;&gt;${fmt(subTotal,2)}/mo&lt;/span&gt;
+    &lt;/div&gt;
+    ${recurring.map(t=&gt;`&lt;div style=&quot;display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)&quot;&gt;&lt;div&gt;&lt;div style=&quot;font-size:13px;font-weight:600&quot;&gt;${esc(t.merchant)}&lt;/div&gt;&lt;div style=&quot;font-size:11px;color:var(--mut)&quot;&gt;${t.category}&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;font-size:14px;font-weight:700;color:#FD79A8&quot;&gt;${fmt(t.amount,2)}&lt;/div&gt;&lt;/div&gt;`).join('')}
+    &lt;div style=&quot;font-size:11px;color:var(--mut);margin-top:8px;text-align:center&quot;&gt;${fmt(subTotal*12,0)}/year · ${fmt(subTotal/weeklyAvg*100,1)}% of weekly income&lt;/div&gt;
+  &lt;/div&gt;`:''}
+  &lt;div style=&quot;height:14px&quot;&gt;&lt;/div&gt;`;
+}
+
+// ═══════════════════════ AI ═══════════════════════
+function renderAI() {
+  if (!cfg.claudeApiKey) return `
+  &lt;div style=&quot;text-align:center;padding:40px 20px&quot;&gt;
+    &lt;div style=&quot;font-size:48px;margin-bottom:16px&quot;&gt;🤖&lt;/div&gt;
+    &lt;div style=&quot;font-size:18px;font-weight:800;margin-bottom:8px&quot;&gt;AI Financial Assistant&lt;/div&gt;
+    &lt;div style=&quot;font-size:13px;color:var(--mut);margin-bottom:20px;line-height:1.6&quot;&gt;Add your Claude API key in Settings to unlock AI-powered insights, automatic transaction categorisation, and your personal money chat.&lt;/div&gt;
+    &lt;button onclick=&quot;setTab('settings')&quot; class=&quot;btn&quot; style=&quot;background:linear-gradient(135deg,#A29BFE,#6C5CE7);color:#fff;padding:12px 24px;border-radius:12px;font-size:14px&quot;&gt;Go to Settings →&lt;/button&gt;
+  &lt;/div&gt;`;
+
+  const chatHTML=data.aiHistory.map(m=&gt;`
+  &lt;div style=&quot;margin-bottom:12px;display:flex;flex-direction:column;align-items:${m.role==='user'?'flex-end':'flex-start'}&quot;&gt;
+    &lt;div style=&quot;max-width:88%;background:${m.role==='user'?'rgba(84,160,255,.15)':'rgba(255,255,255,.06)'};border:1px solid ${m.role==='user'?'rgba(84,160,255,.25)':'rgba(255,255,255,.1)'};border-radius:${m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px'};padding:10px 13px&quot;&gt;
+      &lt;div style=&quot;font-size:13px;line-height:1.55;color:var(--txt);white-space:pre-wrap&quot;&gt;${esc(m.content)}&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div style=&quot;font-size:10px;color:var(--mut);margin-top:3px;padding:0 4px&quot;&gt;${m.role==='user'?'You':'🤖 Claude'}&lt;/div&gt;
+  &lt;/div&gt;`).join('');
+
+  const sugg=['💬 Where did my money go this month?','✂️ Where can I cut back?','💳 How long until I\'m debt free?','📊 Analyse my spending patterns','💡 Suggest a realistic budget plan','📅 Compare this week vs last week'];
+
+  return `
+  &lt;div style=&quot;background:rgba(255,159,67,.08);border:1px solid rgba(255,159,67,.2);border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:#FF9F43;line-height:1.5&quot;&gt;🔒 Financial data is only sent to Claude when you ask a question. Your API key is stored locally.&lt;/div&gt;
+  &lt;div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px&quot;&gt;
+    ${[['📋 Weekly Review','aiWeeklyReview()','rgba(162,155,254,.12)','#A29BFE','AI analyses your week'],['💡 Budget Plan','aiBudgetSuggestions()','rgba(85,239,196,.1)','#55EFC4','AI recommends budgets'],['🏦 Import Statement','openImportBank()','rgba(84,160,255,.1)','#54A0FF','Paste bank text → AI categorises'],['🔄 Find Subscriptions','aiSubDetect()','rgba(253,121,168,.1)','#FD79A8','Detect recurring charges']]
+      .map(([l,fn,bg,col,sub])=&gt;`&lt;button onclick=&quot;${fn}&quot; class=&quot;btn&quot; style=&quot;background:${bg};color:${col};border:1px solid rgba(${hexRgb(col)},.25);padding:10px;border-radius:12px;font-size:12px;text-align:left;line-height:1.4&quot;&gt;${l}&lt;br&gt;&lt;span style=&quot;font-size:10px;color:var(--mut)&quot;&gt;${sub}&lt;/span&gt;&lt;/button&gt;`).join('')}
+  &lt;/div&gt;
+  &lt;div id=&quot;ai-chat&quot; style=&quot;min-height:150px;margin-bottom:10px&quot;&gt;
+    ${data.aiHistory.length===0?`
+    &lt;div style=&quot;text-align:center;padding:16px 0 12px;color:var(--mut)&quot;&gt;&lt;div style=&quot;font-size:26px;margin-bottom:6px&quot;&gt;💬&lt;/div&gt;&lt;div style=&quot;font-size:13px;margin-bottom:12px&quot;&gt;Ask anything about your money&lt;/div&gt;&lt;/div&gt;
+    &lt;div style=&quot;display:flex;flex-wrap:wrap;gap:6px&quot;&gt;
+      ${sugg.map(s=&gt;`&lt;button onclick=&quot;sendAI(${JSON.stringify(s.replace(/^[^\s]+\s/,''))})&quot; style=&quot;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--sub);border-radius:20px;padding:6px 12px;font-size:11px;cursor:pointer;font-family:inherit&quot;&gt;${s}&lt;/button&gt;`).join('')}
+    &lt;/div&gt;`:chatHTML}
+    ${aiLoading?'&lt;div style=&quot;text-align:center;padding:14px;font-size:13px;color:var(--mut)&quot;&gt;⏳ Claude is thinking...&lt;/div&gt;':''}
+  &lt;/div&gt;
+  &lt;div style=&quot;display:flex;gap:8px;align-items:flex-end&quot;&gt;
+    &lt;textarea id=&quot;ai-input&quot; placeholder=&quot;Ask anything about your finances...&quot; rows=&quot;2&quot; style=&quot;flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--txt);font-family:inherit;outline:none&quot; onkeydown=&quot;if(event.key==='Enter'&amp;&amp;!event.shiftKey){event.preventDefault();sendAI()}&quot;&gt;&lt;/textarea&gt;
+    &lt;button onclick=&quot;sendAI()&quot; class=&quot;btn&quot; style=&quot;background:linear-gradient(135deg,#A29BFE,#6C5CE7);color:#fff;padding:10px 16px;border-radius:12px;font-size:18px;height:46px;flex-shrink:0&quot; ${aiLoading?'disabled':''}&gt;➤&lt;/button&gt;
+  &lt;/div&gt;
+  ${data.aiHistory.length&gt;0?`&lt;button onclick=&quot;data.aiHistory=[];saveData();renderContent()&quot; style=&quot;background:none;border:none;color:var(--mut);font-size:11px;cursor:pointer;margin-top:8px;font-family:inherit&quot;&gt;Clear chat&lt;/button&gt;`:''}
+  &lt;div style=&quot;height:14px&quot;&gt;&lt;/div&gt;`;
+}
+
+// ═══════════════════════ SETTINGS ═══════════════════════
+function renderSettings() {
+  const cfgSections=[
+    {g:'Income',col:'#54A0FF',f:[{k:'myWeeklyIncome',l:'Your weekly income'},{k:'wifeFortnightlyIncome',l:&quot;Partner's fortnightly&quot;}]},
+    {g:'Weekly expenses',col:'#FF9F43',f:[{k:'weeklyRent',l:'Rent'},{k:'weeklySpends',l:'Spends budget'},{k:'weeklyEmergency',l:'Emergency contribution'},{k:'weeklyGoals',l:'Goals / trips'}]},
+    {g:'Targets',col:'#A29BFE',f:[{k:'totalDebt',l:'Total debt to repay'},{k:'emergencyTarget',l:'Emergency fund target'}]},
+  ];
+  return `
+  &lt;p class=&quot;sec-title&quot;&gt;Settings&lt;/p&gt;
+  &lt;div style=&quot;background:rgba(162,155,254,.08);border:1px solid rgba(162,155,254,.2);border-radius:16px;padding:16px;margin-bottom:12px&quot;&gt;
+    &lt;div style=&quot;font-size:13px;font-weight:700;color:#A29BFE;margin-bottom:4px&quot;&gt;🤖 Claude API Key&lt;/div&gt;
+    &lt;div style=&quot;font-size:11px;color:var(--mut);margin-bottom:10px&quot;&gt;Stored locally only. Only sent to api.anthropic.com when you use AI features.&lt;/div&gt;
+    &lt;input class=&quot;inp&quot; type=&quot;password&quot; id=&quot;api-key-inp&quot; value=&quot;${esc(cfg.claudeApiKey||'')}&quot; placeholder=&quot;sk-ant-api03-...&quot; style=&quot;width:100%;font-weight:400;font-size:13px;margin-bottom:8px&quot;/&gt;
+    &lt;button onclick=&quot;saveApiKey()&quot; class=&quot;btn&quot; style=&quot;background:rgba(162,155,254,.2);color:#A29BFE;border:1px solid rgba(162,155,254,.3);padding:8px 16px;font-size:13px;border-radius:10px&quot;&gt;Save Key&lt;/button&gt;
+    ${cfg.claudeApiKey?'&lt;span style=&quot;font-size:11px;color:#55EFC4;margin-left:10px&quot;&gt;✓ Active&lt;/span&gt;':''}
+  &lt;/div&gt;
+  &lt;div class=&quot;card&quot; style=&quot;margin-bottom:12px&quot;&gt;
+    &lt;div class=&quot;sec-title&quot;&gt;Preferences&lt;/div&gt;
+    &lt;div class=&quot;row&quot;&gt;
+      &lt;label style=&quot;font-size:13px;color:var(--sub)&quot;&gt;Currency&lt;/label&gt;
+      &lt;select class=&quot;inp&quot; onchange=&quot;cfg.currency=this.value;saveCfg();renderAll()&quot; style=&quot;padding:5px 8px;font-size:12px&quot;&gt;
+        ${['AUD','USD','GBP','EUR','NZD'].map(c=&gt;`&lt;option value=&quot;${c}&quot; ${cfg.currency===c?'selected':''}&gt;${c}&lt;/option&gt;`).join('')}
+      &lt;/select&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;card&quot; style=&quot;margin-bottom:12px&quot;&gt;
+    &lt;div style=&quot;font-size:13px;font-weight:700;margin-bottom:12px&quot;&gt;📊 Income &amp; Expenses&lt;/div&gt;
+    ${cfgSections.map(sec=&gt;`
+    &lt;div style=&quot;font-size:10px;color:${sec.col};text-transform:uppercase;letter-spacing:.07em;padding:8px 0 6px;border-top:1px solid var(--bdr);margin-top:4px;font-weight:700&quot;&gt;${sec.g}&lt;/div&gt;
+    ${sec.f.map(f=&gt;`&lt;div class=&quot;row&quot;&gt;&lt;label style=&quot;font-size:13px;color:var(--sub)&quot;&gt;${f.l}&lt;/label&gt;
+      &lt;div style=&quot;display:flex;align-items:center;gap:4px&quot;&gt;&lt;span style=&quot;font-size:13px;color:var(--mut)&quot;&gt;$&lt;/span&gt;
+      &lt;input class=&quot;inp&quot; type=&quot;number&quot; value=&quot;${cfg[f.k]||0}&quot; style=&quot;width:110px;text-align:right&quot; onchange=&quot;cfg['${f.k}']=parseFloat(this.value)||0;saveCfg();renderHeader()&quot;/&gt;&lt;/div&gt;&lt;/div&gt;`).join('')}`).join('')}
+  &lt;/div&gt;
+  &lt;div style=&quot;background:rgba(85,239,196,.07);border:1px solid rgba(85,239,196,.2);border-radius:16px;padding:16px;margin-bottom:12px&quot;&gt;
+    &lt;div style=&quot;font-size:13px;color:#55EFC4;font-weight:700;margin-bottom:4px&quot;&gt;💰 Current Balances&lt;/div&gt;
+    &lt;div style=&quot;font-size:11px;color:var(--mut);margin-bottom:12px&quot;&gt;Set these to match your actual balances right now.&lt;/div&gt;
+    ${[{k:'emergencyBalance',l:'🛡️ Emergency fund',max:cfg.emergencyTarget},{k:'debtPaid',l:'💳 Debt paid off',max:cfg.totalDebt},{k:'goalsBalance',l:'✈️ Goals savings'},{k:'savingsBalance',l:'💰 Savings'}]
+      .map((f,i,a)=&gt;`&lt;div class=&quot;row&quot; style=&quot;${i===a.length-1?'border:none':''}&quot;&gt;&lt;label style=&quot;font-size:13px;color:var(--sub)&quot;&gt;${f.l}&lt;/label&gt;
+        &lt;div style=&quot;display:flex;align-items:center;gap:4px&quot;&gt;&lt;span style=&quot;font-size:13px;color:var(--mut)&quot;&gt;$&lt;/span&gt;
+        &lt;input class=&quot;inp&quot; type=&quot;number&quot; value=&quot;${data[f.k]||0}&quot; style=&quot;width:110px;text-align:right&quot; onchange=&quot;data['${f.k}']=Math.min(parseFloat(this.value)||0,${f.max||9999999});saveData();renderHeader()&quot;/&gt;&lt;/div&gt;&lt;/div&gt;`).join('')}
+  &lt;/div&gt;
+  &lt;div class=&quot;card&quot; style=&quot;margin-bottom:12px&quot;&gt;
+    &lt;div style=&quot;font-size:13px;font-weight:700;margin-bottom:12px&quot;&gt;📦 Export / Import&lt;/div&gt;
+    &lt;div style=&quot;display:grid;grid-template-columns:1fr 1fr;gap:8px&quot;&gt;
+      ${[['📄 Export Backup','exportJSON()','rgba(85,239,196,.12)','#55EFC4','Full JSON backup'],['📥 Import Backup','$(\'imp-file\').click()','rgba(84,160,255,.12)','#54A0FF','Restore from JSON'],['📊 Transactions CSV','exportTxCSV()','rgba(255,159,67,.1)','#FF9F43','All transactions'],['📋 Summary CSV','exportSummaryCSV()','rgba(253,121,168,.1)','#FD79A8','Monthly summary']]
+        .map(([l,fn,bg,col,sub])=&gt;`&lt;button onclick=&quot;${fn}&quot; class=&quot;btn&quot; style=&quot;background:${bg};color:${col};border:1px solid rgba(${hexRgb(col)},.25);padding:10px;border-radius:10px;font-size:12px;text-align:left;line-height:1.4&quot;&gt;${l}&lt;br&gt;&lt;span style=&quot;font-size:10px;color:var(--mut)&quot;&gt;${sub}&lt;/span&gt;&lt;/button&gt;`).join('')}
+    &lt;/div&gt;
+    &lt;input type=&quot;file&quot; id=&quot;imp-file&quot; accept=&quot;.json&quot; style=&quot;display:none&quot; onchange=&quot;importJSON(this)&quot;/&gt;
+  &lt;/div&gt;
+  &lt;div style=&quot;background:rgba(255,92,92,.06);border:1px solid rgba(255,92,92,.15);border-radius:14px;padding:16px;margin-bottom:14px&quot;&gt;
+    &lt;div style=&quot;font-size:13px;color:#FF5C5C;font-weight:700;margin-bottom:8px&quot;&gt;⚠️ Danger Zone&lt;/div&gt;
+    &lt;div style=&quot;display:flex;gap:8px;flex-wrap:wrap&quot;&gt;
+      &lt;button onclick=&quot;resetBalances()&quot; class=&quot;btn&quot; style=&quot;background:rgba(255,92,92,.1);color:#FF5C5C;border:1px solid rgba(255,92,92,.25);padding:8px 14px;font-size:12px;border-radius:8px&quot;&gt;Reset balances&lt;/button&gt;
+      &lt;button onclick=&quot;resetEverything()&quot; class=&quot;btn&quot; style=&quot;background:rgba(255,92,92,.2);color:#FF5C5C;border:1px solid rgba(255,92,92,.35);padding:8px 14px;font-size:12px;border-radius:8px&quot;&gt;⚠️ Reset everything&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div style=&quot;height:14px&quot;&gt;&lt;/div&gt;`;
+}
+
+// ═══════════════════════ CLAUDE API ═══════════════════════
+function buildContext() {
+  const {weekTotal,monthTotal,monthByCat,savingsRate,weeklyAvg}=C();
+  return `Financial snapshot (${new Date().toLocaleDateString()}):
+- Weekly income: ${fmt(weeklyAvg,2)} | Month spending: ${fmt(monthTotal,2)} | Savings rate: ${savingsRate}%
+- Emergency: ${fmt(data.emergencyBalance)} / ${fmt(cfg.emergencyTarget)} | Debt paid: ${fmt(data.debtPaid)} / ${fmt(cfg.totalDebt)}
+- This week: ${fmt(weekTotal,2)} vs budget ${fmt(cfg.weeklySpends,2)}
+
+Category spending this month:
+${Object.entries(monthByCat).filter(([,v])=&gt;v&gt;0).sort((a,b)=&gt;b[1]-a[1]).map(([c,a])=&gt;`- ${c}: ${fmt(a,2)} (budget: ${fmt((cfg.categoryBudgets[c]||0)*4.33,0)}/mo)`).join('\n')}
+
+Recent ${Math.min(40,data.transactions.length)} transactions:
+${data.transactions.slice(0,40).map(t=&gt;`- ${t.date}|${t.merchant}|${t.category}|${fmt(t.amount,2)}${t.recurring?'|recurring':''}`).join('\n')}`.trim();
+}
+
+async function callClaude(system, user, maxTok=1200) {
+  if (!cfg.claudeApiKey) { flash('Add Claude API key in Settings', false); return null; }
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':cfg.claudeApiKey,'anthropic-version':'2023-06-01'},
+      body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:maxTok,system,messages:[{role:'user',content:user}]})
+    });
+    if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||`HTTP ${r.status}`); }
+    const d=await r.json();
+    return d.content?.[0]?.text||'';
+  } catch(e) { flash('AI error: '+e.message, false); return null; }
+}
+
+window.sendAI = async (preset=null) =&gt; {
+  const inp=$('ai-input');
+  const msg=preset||(inp?.value?.trim()||'');
+  if(!msg||aiLoading) return;
+  aiLoading=true;
+  data.aiHistory.push({role:'user',content:msg});
+  saveData();
+  if(inp) inp.value='';
+  renderContent();
+  const reply=await callClaude('You are a smart, supportive personal finance assistant. Be concise, specific, actionable, and motivating. Use the financial data provided to give personalised insights. Never fabricate numbers not in the data.',`${buildContext()}\n\nUser: ${msg}`);
+  aiLoading=false;
+  if(reply){data.aiHistory.push({role:'assistant',content:reply});saveData();}
+  else data.aiHistory.pop();
+  renderContent();
+};
+
+window.aiWeeklyReview = async () =&gt; {
+  if(aiLoading) return;
+  aiLoading=true;
+  data.aiHistory.push({role:'user',content:'📋 Generate my weekly financial review'});
+  renderContent();
+  const reply=await callClaude('You are a personal finance advisor. Write a concise weekly financial review: highlight wins, flag concerns, give 2-3 specific improvements. 3-4 paragraphs. Supportive, data-driven, direct.', buildContext());
+  aiLoading=false;
+  if(reply){data.aiHistory.push({role:'assistant',content:reply});saveData();}
+  else data.aiHistory.pop();
+  renderContent();
+};
+
+window.aiBudgetSuggestions = async () =&gt; {
+  if(aiLoading) return;
+  aiLoading=true;
+  data.aiHistory.push({role:'user',content:'💡 Suggest a budget plan based on my actual spending'});
+  renderContent();
+  const reply=await callClaude('You are a budgeting expert. Based on actual spending data, suggest realistic weekly category budgets. Give specific dollar amounts. Also suggest 2-3 ways to accelerate debt payoff or savings. Be specific and data-driven.',buildContext());
+  aiLoading=false;
+  if(reply){data.aiHistory.push({role:'assistant',content:reply});saveData();}
+  else data.aiHistory.pop();
+  renderContent();
+};
+
+window.aiSubDetect = async () =&gt; {
+  if(aiLoading) return;
+  if(data.transactions.length===0){flash('Add some transactions first',false);return;}
+  aiLoading=true;
+  data.aiHistory.push({role:'user',content:'🔄 Detect my subscriptions and recurring charges'});
+  renderContent();
+  const txList=data.transactions.map(t=&gt;`${t.date}|${t.merchant}|${fmt(t.amount,2)}`).join('\n');
+  const reply=await callClaude('Analyse transactions and identify likely recurring subscriptions/charges. For each: name, estimated monthly cost, frequency, confidence (High/Medium/Low). Be concise and specific.',`Transactions:\n${txList}`);
+  aiLoading=false;
+  if(reply){data.aiHistory.push({role:'assistant',content:reply});saveData();}
+  else data.aiHistory.pop();
+  renderContent();
+};
+
+window.openImportBank = () =&gt; openModal(`
+&lt;div style=&quot;background:var(--surf);border:1px solid var(--bdr);border-radius:20px;padding:20px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto&quot;&gt;
+  &lt;div style=&quot;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px&quot;&gt;
+    &lt;div style=&quot;font-size:15px;font-weight:800&quot;&gt;🏦 Import Bank Statement&lt;/div&gt;
+    &lt;button onclick=&quot;closeModal()&quot; style=&quot;background:rgba(255,255,255,.08);border:none;color:var(--sub);border-radius:8px;width:30px;height:30px;font-size:16px;cursor:pointer;font-family:inherit&quot;&gt;×&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div style=&quot;font-size:12px;color:var(--mut);margin-bottom:10px;line-height:1.5&quot;&gt;Paste raw bank statement text. Claude will parse and categorise each transaction automatically.&lt;/div&gt;
+  &lt;div style=&quot;font-size:11px;color:#FF9F43;background:rgba(255,159,67,.08);border-radius:8px;padding:8px;margin-bottom:12px&quot;&gt;🔒 Text will be sent to Claude API. Remove sensitive account numbers first.&lt;/div&gt;
+  &lt;textarea id=&quot;bank-text&quot; placeholder=&quot;WOOLWORTHS  84.20&amp;#10;UBER EATS  31.50&amp;#10;NETFLIX  22.99&amp;#10;COLES  67.40&amp;#10;SPOTIFY  11.99&quot; rows=&quot;8&quot; style=&quot;width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;font-size:13px;color:var(--txt);font-family:monospace;box-sizing:border-box;outline:none&quot;&gt;&lt;/textarea&gt;
+  &lt;div style=&quot;margin:8px 0 12px&quot;&gt;
+    &lt;label style=&quot;font-size:11px;color:var(--mut);display:block;margin-bottom:4px&quot;&gt;Transaction date&lt;/label&gt;
+    &lt;input class=&quot;inp&quot; type=&quot;date&quot; id=&quot;bank-date&quot; value=&quot;${today()}&quot; style=&quot;font-weight:400;font-size:13px&quot;/&gt;
+  &lt;/div&gt;
+  &lt;button onclick=&quot;processBank()&quot; class=&quot;btn&quot; style=&quot;width:100%;padding:12px;border-radius:12px;background:linear-gradient(135deg,#54A0FF,#6C5CE7);color:#fff;font-size:14px;box-sizing:border-box&quot;&gt;🤖 Categorise with AI →&lt;/button&gt;
+&lt;/div&gt;`);
+
+window.processBank = async () =&gt; {
+  const text=($('bank-text')?.value||'').trim();
+  const date=$('bank-date')?.value||today();
+  if(!text){flash('Paste some transaction text',false);return;}
+  const btn=document.querySelector('#modal .btn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Processing...';}
+  const reply=await callClaude(`Parse bank statement text into transactions. Return ONLY a valid JSON array. Each item: {&quot;merchant&quot;:&quot;string&quot;,&quot;amount&quot;:number,&quot;category&quot;:&quot;one of: ${CATS.join(',')}&quot;}. Amount always positive. Infer category from merchant. No markdown, no explanation, only the JSON array.`,text,1500);
+  if(!reply){if(btn){btn.disabled=false;btn.textContent='🤖 Categorise with AI →';}return;}
+  try {
+    const clean=reply.replace(/```json?|```/g,'').trim();
+    const txs=JSON.parse(clean);
+    if(!Array.isArray(txs)) throw new Error('Not array');
+    let count=0;
+    txs.forEach(t=&gt;{if(t.merchant&amp;&amp;t.amount&gt;0){addTx({merchant:t.merchant,amount:parseFloat(t.amount),category:CATS.includes(t.category)?t.category:'Other',date,notes:'AI import',recurring:false,type:'expense'});count++;}});
+    closeModal(); flash(`✓ ${count} transactions imported!`); renderAll();
+  } catch(e) { flash('Could not parse AI response. Try again.',false); if(btn){btn.disabled=false;btn.textContent='🤖 Categorise with AI →';} }
+};
+
+// ═══════════════════════ EXPORT / IMPORT ═══════════════════════
+function download(content, name, type) {
+  const b=new Blob([content],{type}), u=URL.createObjectURL(b), a=document.createElement('a');
+  a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u);
+}
+
+window.exportJSON = () =&gt; {
+  download(JSON.stringify({version:2,exportedAt:new Date().toISOString(),cfg,data},null,2), `finos-backup-${today()}.json`, 'application/json');
+  flash('Backup exported ✓');
+};
+
+window.importJSON = inp =&gt; {
+  const f=inp.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=e=&gt;{
+    try {
+      const b=JSON.parse(e.target.result);
+      if(!b.cfg||!b.data) throw new Error('Invalid file');
+      if(!confirm(`Import backup from ${b.exportedAt}?\nThis will overwrite all current data.`))return;
+      cfg={...CFG0,...b.cfg}; data={...DATA0,...b.data};
+      saveCfg(); saveData(); renderAll(); flash('Backup imported ✓');
+    } catch(err){flash('Import failed: '+err.message,false);}
+  };
+  r.readAsText(f); inp.value='';
+};
+
+window.exportTxCSV = () =&gt; {
+  if(!data.transactions.length){flash('No transactions to export',false);return;}
+  const h='Date,Merchant,Amount,Category,Type,Recurring,Notes';
+  const rows=data.transactions.map(t=&gt;`${t.date},&quot;${(t.merchant||'').replace(/&quot;/g,'&quot;&quot;')}&quot;,${t.amount},&quot;${t.category}&quot;,&quot;${t.type||'expense'}&quot;,${t.recurring?'Yes':'No'},&quot;${(t.notes||'').replace(/&quot;/g,'&quot;&quot;')}&quot;`);
+  download([h,...rows].join('\n'), `finos-transactions-${today()}.csv`, 'text/csv');
+  flash('CSV exported ✓');
+};
+
+window.exportSummaryCSV = () =&gt; {
+  const {monthByCat}=C();
+  const h='Category,Weekly Budget,Monthly Budget,Spent This Month,Remaining,Status';
+  const rows=Object.entries(cfg.categoryBudgets).map(([cat,wk])=&gt;{
+    const mo=(wk*4.33).toFixed(2), sp=(monthByCat[cat]||0).toFixed(2), rem=(wk*4.33-monthByCat[cat]||0).toFixed(2);
+    const st=wk===0?'No budget':parseFloat(sp)&gt;parseFloat(mo)?'Over':'On track';
+    return `&quot;${cat}&quot;,${wk},${mo},${sp},${rem},&quot;${st}&quot;`;
+  });
+  download([h,...rows].join('\n'), `finos-summary-${today()}.csv`, 'text/csv');
+  flash('Summary exported ✓');
+};
+
+// ═══════════════════════ GLOBAL HANDLERS ═══════════════════════
+window.setTab = t =&gt; { tab=t; renderAll(); };
+window.closeModal = closeModal;
+window.saveData = saveData;
+
+window.saveApiKey = () =&gt; {
+  cfg.claudeApiKey=($('api-key-inp')?.value||'').trim();
+  saveCfg(); flash(cfg.claudeApiKey?'API key saved ✓':'API key cleared'); renderContent();
+};
+
+window.resetBalances = () =&gt; {
+  if(!confirm('Reset all balances and logs? Transactions are kept.'))return;
+  data={...data,emergencyBalance:0,debtPaid:0,goalsBalance:0,savingsBalance:0,logs:[],aiHistory:[]};
+  saveData(); renderAll(); flash('Balances reset');
+};
+
+window.resetEverything = () =&gt; {
+  if(!confirm('⚠️ Delete ALL data? This cannot be undone.'))return;
+  if(!confirm('Final confirmation — delete everything?'))return;
+  cfg={...CFG0}; data={...DATA0}; saveCfg(); saveData(); renderAll(); flash('All data cleared');
+};
+
+// ═══════════════════════ RENDER ═══════════════════════
+function renderContent() {
+  const map={dashboard:renderDashboard,transactions:renderTransactions,budgets:renderBudgets,analytics:renderAnalytics,ai:renderAI,settings:renderSettings};
+  $('content').innerHTML=(map[tab]||renderDashboard)();
+}
+
+function renderAll() { renderHeader(); renderContent(); renderNav(); }
+
+// ═══════════════════════ INIT ═══════════════════════
+renderAll();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+</body>
+</html>
