@@ -33,7 +33,7 @@ npm run dist:win
 
 ## Claude API in Electron
 - Renderer routes AI via `window.finosAPI.aiMessage(payload)` from preload.
-- IPC handler lives in `main.js` (`ipcMain.handle('finos:claudeMessage')`).
+- IPC handlers live in `main.js` (including `ipcMain.handle('ai-message')`).
 - Anthropic API is called only in main process.
 - Put your API key in Settings.
 - For personal local use, key is stored locally now; architecture can later move to Keychain/keytar.
@@ -55,3 +55,11 @@ Workflow file: `.github/workflows/build.yml`
 - App remains local-first and offline-capable except Claude requests.
 - Import/export includes validation and corruption-safe fallback behavior.
 - Renderer has basic runtime error logging (`error` and `unhandledrejection`) to aid debugging.
+
+
+## First-run OpenAI setup
+1. Open the app.
+2. Go to **Settings**.
+3. Paste your **OpenAI API key**.
+4. Click **Test OpenAI Key**.
+5. Open **AI Coach** and start using AI features.
