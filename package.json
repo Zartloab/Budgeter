@@ -1,0 +1,36 @@
+{
+  "name": "finos-budgeter",
+  "version": "3.0.0",
+  "description": "FinOS local-first weekly income delegation desktop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac dmg",
+    "dist:win": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.finos.local",
+    "productName": "FinOS",
+    "files": [
+      "index.html",
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  }
+}
