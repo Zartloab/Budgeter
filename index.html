@@ -5,24 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FinOS</title>
 <style>
-*{box-sizing:border-box} :root{--bg:#07070F;--surface:#0F0F1A;--surface2:#181828;--border:rgba(255,255,255,.08);--text:#f2f2ff;--muted:#9090b4;--primary:#6ea8ff;--good:#55EFC4;--warn:#FFB86B;--bad:#FF6B7A;--radius:16px}
-body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#1a1a34 0%,var(--bg) 55%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;display:flex;justify-content:center;padding:12px;min-height:100vh}
-#app{width:100%;max-width:520px;height:calc(100vh - 24px);background:linear-gradient(180deg,#0b0b17,#07070F);border:1px solid var(--border);border-radius:22px;box-shadow:0 25px 80px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden}
-.header{padding:14px 14px 10px;border-bottom:1px solid var(--border);background:rgba(15,15,26,.92);backdrop-filter:blur(4px)}
-.title{font-size:22px;font-weight:800;letter-spacing:-.02em}.subtitle{font-size:12px;color:var(--muted)}
-.content{flex:1;overflow:auto;padding:12px}
-.card{background:linear-gradient(180deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px}
-.label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}.num{font-size:24px;font-weight:800}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.inp,textarea,select{width:100%;padding:9px 10px;background:#121225;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:10px;margin-top:6px}
-.btn{background:#222743;border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:12px;padding:10px 12px;font-weight:700;cursor:pointer}.btn-cta{background:linear-gradient(135deg,#6EA8FF,#9A7BFF);color:#04030f;border:0}
+*{box-sizing:border-box}
+:root{--bg:#000;--surface:#0a0a0a;--surface2:#16181a;--text:#fff;--muted:rgba(255,255,255,.72);--line:rgba(255,255,255,.12);--primary:#494fdf;--primary-bright:#4f55f1;--teal:#00a87e;--warn:#ec7e00;--bad:#e23b4a}
+body{margin:0;background:#000;color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;padding:12px;min-height:100vh}
+#app{width:100%;max-width:520px;height:calc(100vh - 24px);background:#000;border:1px solid var(--line);border-radius:28px;display:flex;flex-direction:column;overflow:hidden}
+.header{padding:16px 16px 12px;border-bottom:1px solid var(--line);background:#000}
+.title{font-size:30px;font-weight:600;letter-spacing:-.02em}.subtitle{font-size:13px;color:var(--muted)}
+.content{flex:1;overflow:auto;padding:14px}
+.card{background:var(--surface2);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:10px}
+.label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}.num{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.inp,textarea,select{width:100%;padding:14px 16px;background:#fff;color:#191c1f;border:1px solid #e2e2e7;border-radius:12px;margin-top:6px;font-size:16px}
+.btn{background:#fff;color:#000;border:0;border-radius:9999px;height:48px;padding:0 18px;font-size:14px;font-weight:700;cursor:pointer}
+.btn-cta{background:var(--primary);color:#fff}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.row{display:flex;justify-content:space-between;align-items:center;gap:8px}.pill{font-size:11px;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:#d7d7ff;background:rgba(255,255,255,.04)}
-.status-funded{border-color:rgba(85,239,196,.4)}.status-partial{border-color:rgba(255,184,107,.5)}.status-skipped{border-color:rgba(255,107,122,.4)}
-.progress{height:6px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden}.bar{height:100%;background:linear-gradient(90deg,#6EA8FF,#55EFC4)}
-.bucket{padding:10px;border-radius:14px;border:1px solid var(--border);background:#141427}
-.nav{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:8px;border-top:1px solid var(--border);background:#0f0f1a}
-.nav button{background:none;border:0;color:#7f7f9e;border-top:2px solid transparent;padding:7px 2px;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px}.nav button.active{color:#fff;border-top-color:#6EA8FF}
-.small{font-size:12px;color:var(--muted)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{font-size:11px;border:1px solid var(--line);padding:5px 10px;border-radius:9999px;color:#fff;background:#000}
+.status-funded{border-color:rgba(0,168,126,.8)}.status-partial{border-color:rgba(236,126,0,.85)}.status-skipped{border-color:rgba(226,59,74,.85)}
+.progress{height:6px;background:rgba(255,255,255,.09);border-radius:9999px;overflow:hidden}.bar{height:100%;background:var(--primary-bright)}
+.bucket{padding:12px;border-radius:20px;border:1px solid var(--line);background:#0a0a0a}
+.nav{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:8px;border-top:1px solid var(--line);background:#000}
+.nav button{background:none;border:0;color:var(--muted);border-top:2px solid transparent;padding:8px 2px;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav button.active{color:#fff;border-top-color:var(--primary)}
+.small{font-size:13px;color:var(--muted);line-height:1.4}
 </style>
 </head>
 <body><div id="app"></div>
