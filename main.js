@@ -36,14 +36,14 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-ipcMain.handle('finos:appInfo', () => ({
+ipcMain.handle('app-info', () => ({
   version: app.getVersion(),
   name: app.getName(),
   platform: process.platform,
   electron: process.versions.electron
 }));
 
-ipcMain.handle('finos:getAIProviders', () => ({
+ipcMain.handle('get-ai-providers', () => ({
   success: true,
   providers: PROVIDERS,
   defaults: { openai: 'gpt-5.2', claude: 'claude-sonnet-4-20250514' }
