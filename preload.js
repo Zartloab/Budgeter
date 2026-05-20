@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('finosAPI', {
-  claudeMessage: (payload) => ipcRenderer.invoke('finos:claudeMessage', payload),
+  aiMessage: (payload) => ipcRenderer.invoke('ai-message', payload),
+  getAIProviders: () => ipcRenderer.invoke('finos:getAIProviders'),
   appInfo: () => ipcRenderer.invoke('finos:appInfo')
 });

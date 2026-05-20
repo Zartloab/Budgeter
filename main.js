@@ -1,18 +1,28 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const { routeAIMessage, PROVIDERS } = require('./src/ai/aiRouter');
+
+function log(...args) {
+  console.log('[FinOS]', ...args);
+}
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 520,
     height: 900,
+    minWidth: 480,
+    minHeight: 760,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      sandbox: true
     }
   });
 
-  win.loadFile('index.html');
+  win.once('ready-to-show', () => win.show());
+  win.loadFile('index.html').catch((error) => log('Failed to load index.html', error));
 }
 
 app.whenReady().then(() => {
@@ -29,31 +39,41 @@ app.on('window-all-closed', () => {
 ipcMain.handle('finos:appInfo', () => ({
   version: app.getVersion(),
   name: app.getName(),
-  platform: process.platform
+  platform: process.platform,
+  electron: process.versions.electron
 }));
 
-ipcMain.handle('finos:claudeMessage', async (_, payload) => {
-  const { apiKey, system, messages, model = 'claude-sonnet-4-20250514', max_tokens = 700 } = payload || {};
-  if (!apiKey) {
-    return { ok: false, error: 'Claude API key is missing. Add it in Settings.' };
-  }
+ipcMain.handle('finos:getAIProviders', () => ({
+  success: true,
+  providers: PROVIDERS,
+  defaults: { openai: 'gpt-5.2', claude: 'claude-sonnet-4-20250514' }
+}));
 
+ipcMain.handle('ai-message', async (_, payload) => {
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({ model, max_tokens, system, messages })
-    });
+    if (!payload || typeof payload !== 'object') {
+      return { success: false, provider: 'unknown', error: 'Invalid AI payload.' };
+    }
 
-    const json = await res.json();
-    if (!res.ok) return { ok: false, error: json?.error?.message || 'Claude request failed.' };
-    const text = (json.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('\n');
-    return { ok: true, text, raw: json };
+    const provider = String(payload.provider || 'openai').toLowerCase();
+    const model = typeof payload.model === 'string' ? payload.model.trim() : '';
+    const system = typeof payload.system === 'string' ? payload.system.slice(0, 12000) : '';
+    const input = typeof payload.input === 'string' ? payload.input.slice(0, 20000) : '';
+
+    if (!input) {
+      return { success: false, provider, error: 'AI input is empty.' };
+    }
+
+    return await routeAIMessage({
+      provider,
+      model,
+      system,
+      input,
+      responseFormat: payload.responseFormat === 'json' ? 'json' : 'text',
+      openaiApiKey: typeof payload.openaiApiKey === 'string' ? payload.openaiApiKey.trim() : '',
+      claudeApiKey: typeof payload.claudeApiKey === 'string' ? payload.claudeApiKey.trim() : ''
+    });
   } catch (error) {
-    return { ok: false, error: error.message || 'Unexpected Claude error.' };
+    return { success: false, provider: 'unknown', error: `AI routing failed: ${error.message}` };
   }
 });

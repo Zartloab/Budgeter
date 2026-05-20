@@ -1,6 +1,6 @@
 {
   "name": "finos-budgeter",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "FinOS local-first weekly income delegation desktop app",
   "main": "main.js",
   "scripts": {
@@ -29,8 +29,14 @@
       "target": "nsis"
     }
   },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "openai": "^4.104.0"
   }
 }
