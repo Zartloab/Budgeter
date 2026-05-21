@@ -24,10 +24,23 @@ async function sendOpenAIMessage({ apiKey, model, system, input, responseFormat 
     }
 
     const response = await client.responses.create(req);
+    const derivedText = (() => {
+      if (typeof response.output_text === 'string' && response.output_text.trim()) return response.output_text.trim();
+      const chunks = [];
+      for (const item of Array.isArray(response.output) ? response.output : []) {
+        for (const part of Array.isArray(item?.content) ? item.content : []) {
+          if (part?.type === 'output_text' && typeof part?.text === 'string' && part.text.trim()) {
+            chunks.push(part.text.trim());
+          }
+        }
+      }
+      return chunks.join('\n').trim();
+    })();
+
     return {
       success: true,
       provider: 'openai',
-      text: response.output_text || '',
+      text: derivedText,
       raw: response
     };
   } catch (error) {

@@ -107,7 +107,8 @@ if(!window.finosAPI){
         const res=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${key}`},body:JSON.stringify(req)});
         const json=await res.json().catch(()=>({}));
         if(!res.ok)return{success:false,provider,error:json?.error?.message||'OpenAI request failed.'};
-        return{success:true,provider,text:json.output_text||''};
+        const text=(typeof json.output_text==='string'&&json.output_text.trim())?json.output_text.trim():((Array.isArray(json.output)?json.output:[]).flatMap(o=>Array.isArray(o?.content)?o.content:[]).filter(c=>c?.type==='output_text'&&typeof c?.text==='string').map(c=>c.text.trim()).filter(Boolean).join('\n').trim());
+        return{success:true,provider,text};
       }catch(e){return{success:false,provider,error:e.message||'OpenAI request failed.'};}
     }
     if(provider==='claude'){
