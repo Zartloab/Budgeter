@@ -91,6 +91,39 @@ function bind(){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=
 }
 
 window.addEventListener('error',e=>console.error('Renderer error:',e.message));window.addEventListener('unhandledrejection',e=>console.error('Unhandled promise rejection:',e.reason));
-if(!window.finosAPI){window.finosAPI={aiMessage:async()=>({success:false,error:'AI unavailable in browser preview'}),getAIProviders:async()=>({success:true,providers:['openai','claude']}),appInfo:async()=>({name:'FinOS (Web Preview)',version:'preview',platform:'browser',electron:'N/A'})};}
+if(!window.finosAPI){
+  const browserAI=async(payload={})=>{
+    const provider=String(payload.provider||'openai').toLowerCase();
+    const input=String(payload.input||'').trim();
+    const system=String(payload.system||'');
+    const model=String(payload.model||'').trim();
+    if(!input)return{success:false,provider,error:'AI input is empty.'};
+    if(provider==='openai'){
+      const key=String(payload.openaiApiKey||'').trim();
+      if(!key)return{success:false,provider,error:'Add an OpenAI key in Settings.'};
+      try{
+        const req={model:model||'gpt-5.2',instructions:system,input,store:false};
+        if(payload.responseFormat==='json')req.text={format:{type:'json_object'}};
+        const res=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${key}`},body:JSON.stringify(req)});
+        const json=await res.json().catch(()=>({}));
+        if(!res.ok)return{success:false,provider,error:json?.error?.message||'OpenAI request failed.'};
+        return{success:true,provider,text:json.output_text||''};
+      }catch(e){return{success:false,provider,error:e.message||'OpenAI request failed.'};}
+    }
+    if(provider==='claude'){
+      const key=String(payload.claudeApiKey||'').trim();
+      if(!key)return{success:false,provider,error:'Add a Claude key in Settings.'};
+      try{
+        const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:model||'claude-sonnet-4-20250514',max_tokens:700,system,messages:[{role:'user',content:input}]})});
+        const json=await res.json().catch(()=>({}));
+        if(!res.ok)return{success:false,provider,error:json?.error?.message||'Claude request failed.'};
+        const text=Array.isArray(json.content)?json.content.filter(c=>c.type==='text').map(c=>c.text).join('\n').trim():'';
+        return{success:true,provider,text:text||'No text response returned.'};
+      }catch(e){return{success:false,provider,error:e.message||'Claude request failed.'};}
+    }
+    return{success:false,provider,error:`Unsupported provider: ${provider}`};
+  };
+  window.finosAPI={aiMessage:browserAI,getAIProviders:async()=>({success:true,providers:['openai','claude']}),appInfo:async()=>({name:'FinOS (Web Preview)',version:'preview',platform:'browser',electron:'N/A'})};
+}
 const app=document.getElementById('app');if(!cfg.onboardingDone)modal={type:'onboarding',step:0};render();
 </script></body></html>
